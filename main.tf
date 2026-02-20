@@ -4,6 +4,6 @@ resource "azurerm_resource_group" "demo" {
 
   tags = {
     ManagedBy = "Terraform"
-    Purpose   = "BackendStateProof-01"
+    Purpose   = "BackendStateProof-02"
   }
 }
