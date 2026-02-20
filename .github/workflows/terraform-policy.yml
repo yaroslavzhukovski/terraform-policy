@@ -3,68 +3,35 @@ name: Terraform Policy
 on:
   pull_request:
     branches: ["main"]
+    paths:
+      - "**/*.tf"
+      - "**/*.tfvars"
+      - "custom-policies/**"
+      - "initiatives/**"
+      - "exemptions/**"
+      - "scopes/**"
+      - ".github/workflows/terraform-policy.yml"
   push:
     branches: ["main"]
+    paths:
+      - "**/*.tf"
+      - "**/*.tfvars"
+      - "custom-policies/**"
+      - "initiatives/**"
+      - "exemptions/**"
+      - "scopes/**"
+      - ".github/workflows/terraform-policy.yml"
+  workflow_dispatch:
 
-# Prevent parallel runs from corrupting state (especially applies)
 concurrency:
-  group: terraform-policy-${{ github.ref }}
-  cancel-in-progress: false
-
-permissions:
-  contents: read
+  group: terraform-policy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   plan:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write # required for OIDC
-      contents: read
-
-    env:
-      TF_IN_AUTOMATION: "true"
-      TF_INPUT: "false"
-
-      # Terraform AzureRM OIDC (provider + backend)
-      ARM_USE_OIDC: "true"
-      ARM_USE_AZUREAD: "true"
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      # Make the federated token file path available for Terraform backend/provider
-      - name: Export OIDC token path for Terraform
-        run: echo "ARM_OIDC_TOKEN_FILE_PATH=$AZURE_FEDERATED_TOKEN_FILE" >> "$GITHUB_ENV"
-
-      - uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform Init
-        run: terraform init -reconfigure
-
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        run: terraform plan -no-color
-
-  apply:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     permissions:
       id-token: write
@@ -82,21 +49,37 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Export OIDC token path for Terraform
-        run: echo "ARM_OIDC_TOKEN_FILE_PATH=$AZURE_FEDERATED_TOKEN_FILE" >> "$GITHUB_ENV"
-
       - uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        run: terraform init -reconfigure
+      - run: terraform fmt -check -recursive
+      - run: terraform init -reconfigure
+      - run: terraform validate
+      - run: terraform plan -no-color -lock-timeout=5m
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve -no-color
+  apply:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - run: terraform fmt -check -recursive
+      - run: terraform init -reconfigure
+      - run: terraform validate
+      - run: terraform apply -auto-approve -no-color -lock-timeout=5m
