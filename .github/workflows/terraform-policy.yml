@@ -1,51 +1,27 @@
-name: Terraform Policy
+name: Terraform
 
 on:
   pull_request:
     branches: ["main"]
-    paths:
-      - "**/*.tf"
-      - "**/*.tfvars"
-      - "custom-policies/**"
-      - "initiatives/**"
-      - "exemptions/**"
-      - "scopes/**"
-      - ".github/workflows/terraform-policy.yml"
   push:
     branches: ["main"]
-    paths:
-      - "**/*.tf"
-      - "**/*.tfvars"
-      - "custom-policies/**"
-      - "initiatives/**"
-      - "exemptions/**"
-      - "scopes/**"
-      - ".github/workflows/terraform-policy.yml"
-  workflow_dispatch:
 
-concurrency:
-  group: terraform-policy-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  ARM_USE_OIDC: "true"
+  ARM_USE_AZUREAD: "true"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
-  plan:
-    if: github.event_name == 'pull_request'
+  terraform:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    permissions:
-      id-token: write
-      contents: read
-
-    env:
-      TF_IN_AUTOMATION: "true"
-      TF_INPUT: "false"
-
-      ARM_USE_OIDC: "true"
-      ARM_USE_AZUREAD: "true"
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     steps:
       - uses: actions/checkout@v4
@@ -64,48 +40,13 @@ jobs:
         with:
           terraform_version: 1.14.5
 
-      - run: terraform fmt -check -recursive
       - run: terraform init -reconfigure -backend-config="use_oidc=true" -backend-config="use_azuread_auth=true" -backend-config="client_id=${ARM_CLIENT_ID}" -backend-config="tenant_id=${ARM_TENANT_ID}" -backend-config="subscription_id=${ARM_SUBSCRIPTION_ID}"
       - run: terraform validate
-      - run: terraform plan -no-color -lock-timeout=5m
 
-  apply:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+      - name: Terraform Plan (PR)
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color -lock-timeout=5m
 
-    permissions:
-      id-token: write
-      contents: read
-
-    env:
-      TF_IN_AUTOMATION: "true"
-      TF_INPUT: "false"
-
-      ARM_USE_OIDC: "true"
-      ARM_USE_AZUREAD: "true"
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Export OIDC token path for Terraform
-        run: echo "ARM_OIDC_TOKEN_FILE_PATH=$AZURE_FEDERATED_TOKEN_FILE" >> "$GITHUB_ENV"
-
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.14.5
-
-      - run: terraform fmt -check -recursive
-      - run: terraform init -reconfigure -backend-config="use_oidc=true" -backend-config="use_azuread_auth=true" -backend-config="client_id=${ARM_CLIENT_ID}" -backend-config="tenant_id=${ARM_TENANT_ID}" -backend-config="subscription_id=${ARM_SUBSCRIPTION_ID}"
-      - run: terraform validate
-      - run: terraform apply -auto-approve -no-color -lock-timeout=5m
+      - name: Terraform Apply (Push main)
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve -no-color -lock-timeout=5m
