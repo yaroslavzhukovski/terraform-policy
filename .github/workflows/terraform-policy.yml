@@ -65,7 +65,7 @@ jobs:
           terraform_version: 1.14.5
 
       - run: terraform fmt -check -recursive
-      - run: terraform init -reconfigure
+      - run: terraform init -reconfigure -backend-config="use_oidc=true" -backend-config="use_azuread_auth=true" -backend-config="client_id=${ARM_CLIENT_ID}" -backend-config="tenant_id=${ARM_TENANT_ID}" -backend-config="subscription_id=${ARM_SUBSCRIPTION_ID}"
       - run: terraform validate
       - run: terraform plan -no-color -lock-timeout=5m
 
@@ -106,6 +106,6 @@ jobs:
           terraform_version: 1.14.5
 
       - run: terraform fmt -check -recursive
-      - run: terraform init -reconfigure
+      - run: terraform init -reconfigure -backend-config="use_oidc=true" -backend-config="use_azuread_auth=true" -backend-config="client_id=${ARM_CLIENT_ID}" -backend-config="tenant_id=${ARM_TENANT_ID}" -backend-config="subscription_id=${ARM_SUBSCRIPTION_ID}"
       - run: terraform validate
       - run: terraform apply -auto-approve -no-color -lock-timeout=5m
