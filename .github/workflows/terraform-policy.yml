@@ -121,6 +121,9 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -no-color -lock-timeout=${{ env.TF_LOCK_TIMEOUT }} -out=tfplan
 
+      - name: Render Plan Text
+        run: terraform show -no-color tfplan > plan.txt
+
       - name: Plan Artifact Metadata
         id: meta
         run: echo "artifact_name=tfplan-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
@@ -131,6 +134,7 @@ jobs:
           name: ${{ steps.meta.outputs.artifact_name }}
           path: |
             tfplan
+            plan.txt
           retention-days: 7
 
   apply:
