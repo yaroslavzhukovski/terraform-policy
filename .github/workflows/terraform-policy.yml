@@ -138,9 +138,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: plan
-    if: |
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     environment: production
     concurrency:
       group: terraform-apply-production
