@@ -1,7 +1,7 @@
 variable "management_group_name" {
   description = "The name of the management group to which the policy will be assigned."
   type        = string
-
+  default     = "my_landing_zone"
 }
 
 variable "allowed_locations" {
