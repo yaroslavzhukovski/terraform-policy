@@ -4,14 +4,18 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "**/*.tf"
-      - "**/*.tfvars"
+      - "terraform/**/*.tf"
+      - "terraform/**/*.tfvars"
+      - "policy_definitions/**/*.json"
+      - "initiatives/**/*.json"
       - ".github/workflows/terraform-policy.yml"
   push:
     branches: [main]
     paths:
-      - "**/*.tf"
-      - "**/*.tfvars"
+      - "terraform/**/*.tf"
+      - "terraform/**/*.tfvars"
+      - "policy_definitions/**/*.json"
+      - "initiatives/**/*.json"
       - ".github/workflows/terraform-policy.yml"
   workflow_dispatch:
 
@@ -26,7 +30,7 @@ env:
   ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  TF_ROOT: .
+  TF_ROOT: terraform
   TF_LOCK_TIMEOUT: 5m
 
 jobs:
