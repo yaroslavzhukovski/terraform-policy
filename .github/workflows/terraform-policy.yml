@@ -137,8 +137,8 @@ jobs:
         with:
           name: ${{ steps.meta.outputs.artifact_name }}
           path: |
-            tfplan
-            plan.txt
+            ${{ env.TF_ROOT }}/tfplan
+            ${{ env.TF_ROOT }}/plan.txt
           retention-days: 7
 
   apply:
@@ -200,7 +200,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.plan.outputs.artifact_name }}
-          path: .
+          path: ${{ env.TF_ROOT }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -no-color -lock-timeout=${{ env.TF_LOCK_TIMEOUT }} tfplan
