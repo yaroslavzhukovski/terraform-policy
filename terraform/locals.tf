@@ -1,7 +1,6 @@
 locals {
-  name_prefix          = lower(var.naming_prefix)
-  assignment_prefix    = substr(replace(local.name_prefix, "-", ""), 0, 6)
-  allowed_locs_pa_name = "${local.assignment_prefix}-aloc"
+  name_prefix       = lower(var.naming_prefix)
+  assignment_prefix = substr(replace(local.name_prefix, "-", ""), 0, 6)
 
   builtin_initiatives = {
     mcsb = "/providers/Microsoft.Authorization/policySetDefinitions/1f3afdf9-d0c9-4c3d-847f-89da613e70a8"

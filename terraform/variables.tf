@@ -41,5 +41,4 @@ variable "resource_group_name_prefix" {
   description = "Prefix for resource group names created by this project."
   type        = string
   default     = "rg-"
-
 }
