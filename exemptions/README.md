@@ -1,5 +1,3 @@
 # Exemptions
 
-Documentation and exemption metadata can be organized here.
-
-Active Terraform exemption resources are currently in `terraform/`.
+All exemptions tracked with expiry and ticket.
