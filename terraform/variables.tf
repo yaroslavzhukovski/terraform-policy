@@ -16,14 +16,10 @@ variable "naming_prefix" {
   default     = "platform"
 }
 
-variable "required_tags" {
-  description = "Required tags and values for the 'Require a tag and its value on resources' policy."
-  type        = map(string)
-  default = {
-    "costcenter"  = "production"
-    "environment" = "dev"
-    "owner"       = "platform-team"
-  }
+variable "required_tag_keys" {
+  description = "Required tag keys for governance baseline. Resource groups must have these tags; resources inherit them if missing."
+  type        = set(string)
+  default     = ["costcenter", "environment", "owner"]
 }
 
 variable "guardrails_enforcement_mode" {
@@ -41,4 +37,10 @@ variable "resource_group_name_prefix" {
   description = "Prefix for resource group names created by this project."
   type        = string
   default     = "rg-"
+}
+
+variable "policy_assignment_location" {
+  description = "Azure location used by policy assignments with managed identity."
+  type        = string
+  default     = "swedencentral"
 }
