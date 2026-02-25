@@ -4,7 +4,7 @@ resource "azurerm_role_assignment" "org_baseline_modify_roles" {
     role_id => role_id
   }
 
-  scope              = data.azurerm_management_group.target.id
+  scope              = data.azurerm_subscription.current.id
   role_definition_id = each.value
   principal_id       = azurerm_management_group_policy_assignment.org_baseline.identity[0].principal_id
   principal_type     = "ServicePrincipal"
